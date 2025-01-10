@@ -5,11 +5,12 @@ import time
 from pyquery import PyQuery as pq
 import traceback
 import sys
+import argparse
 
 CR = '--------------------------------------------------------------------------------------------------------------------------\r'
 
-sess = requests.session()
-sess.headers = {
+s = requests.session()
+s.headers = {
     'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36'
 }
 
@@ -34,17 +35,17 @@ def generate_form_data(html: pq, ip_address: ipaddress.IPv4Address, isRetry=Fals
 def ip_location(ip: str) -> None:
     ip_address = ipaddress.ip_address(ip)
 
-    with sess.get('https://mylocation.co.kr/') as r1:
+    with s.get('https://mylocation.co.kr/') as r1:
         time.sleep(3.5)  # 3초 딜레이 없으면 리턴 지랄남
 
-        with sess.post(
+        with s.post(
             'https://mylocation.co.kr/',
             data=generate_form_data(pq(r1.text), ip_address),
         ) as r2:
             lbInfomation = pq(r2.text)('#lbInfomation')
 
             if not lbInfomation:
-                with sess.post(
+                with s.post(
                     'https://mylocation.co.kr/',
                     data=generate_form_data(pq(r2.text), ip_address, True),
                 ) as r3:
@@ -64,14 +65,9 @@ def ip_location(ip: str) -> None:
 
 
 if __name__ == '__main__':
-    while True:
-        try:
-            print('\n')
-            ip_location(
-                input('(query) '),
-            )
-        except KeyboardInterrupt:
-            sys.exit(0)
-        except:
-            print(traceback.format_exc())
-            continue
+
+    parser = argparse.ArgumentParser(description='mylocation.co.kr client')
+    parser.add_argument("-i", "--ip", required=True)
+    args = parser.parse_args()
+    print(args)
+    ip_location(args.ip)
